@@ -1,29 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import { Text, View, StyleSheet, FlatList, ActivityIndicator } from 'react-native'
+import { useNavigation } from '@react-navigation/core'
 
 import { EnvironmentButton, Header, PlantCardPrimary, Load } from '../components'
 import api from '../services/api'
 
 import colors from '../styles/colors'
 import fonts from '../styles/fonts'
+import { PlantProps } from '../libs/storage'
 
 interface EnvironmentProps {
   key: string
   title: string
-}
-
-interface PlantProps {
-  id: string
-  name: string
-  about: string
-  water_tips: string
-  photo: string
-  environments: string[]
-  frequency: {
-    times: number
-    repeat_every: string
-  }
-
 }
 
 const PlantSelect: React.FC = () => {
@@ -35,7 +23,8 @@ const PlantSelect: React.FC = () => {
 
   const [page, setPage] = useState(1)
   const [loadingMore, setLoadingMore] = useState(false)
-  const [loadedAll, setLoadedAll] = useState(false)
+
+  const navigation = useNavigation()
 
   const handleEnvironmentSelected = (environment: string): void => {
     setEnvironmentSelected(environment)
@@ -79,6 +68,10 @@ const PlantSelect: React.FC = () => {
     fetchPlants()
   }
 
+  const handlePlantSelect = (plant: PlantProps): void => {
+    navigation.navigate('PlantSave', { plant })
+  }
+
   useEffect(() => {
     async function fetchEnvironment() {
       const { data } = await api.get('plants_environments?_sort=title&_order=asc')
@@ -109,13 +102,16 @@ const PlantSelect: React.FC = () => {
       </View>
 
       <View>
-        <FlatList data={environment} renderItem={({ item }) => (
-          <EnvironmentButton
-            title={item.title}
-            active={item.key === environmentSelected}
-            onPress={() => handleEnvironmentSelected(item.key)}
-          />
-        )}
+        <FlatList
+          data={environment}
+          keyExtractor={(item) => String(item.key)}
+          renderItem={({ item }) => (
+            <EnvironmentButton
+              title={item.title}
+              active={item.key === environmentSelected}
+              onPress={() => handleEnvironmentSelected(item.key)}
+            />
+          )}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.environmentList}
@@ -125,9 +121,11 @@ const PlantSelect: React.FC = () => {
       <View style={styles.plants}>
         <FlatList
           data={filteredPlants}
+          keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => (
             <PlantCardPrimary
               data={item}
+              onPress={() => handlePlantSelect(item)}
             />
           )}
           showsVerticalScrollIndicator={false}
